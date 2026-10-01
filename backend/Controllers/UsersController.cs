@@ -126,4 +126,36 @@ public class UsersController : ControllerBase
 
     return NoContent();
   }
+
+  [HttpGet("{id}/tasks")]
+  public async Task<ActionResult<IEnumerable<TaskResponseDto>>> GetUserTasks(int id)
+  {
+    var userExists = await _context.Users
+        .AnyAsync(user => user.Id == id);
+
+    if (!userExists)
+    {
+      return NotFound("User does not exist.");
+    }
+
+    var tasks = await _context.Tasks
+        .Where(task => task.UserId == id)
+        .Select(task => new TaskResponseDto
+        {
+          Id = task.Id,
+          Title = task.Title,
+          Description = task.Description,
+          Status = task.Status,
+          Priority = task.Priority,
+          UserId = task.UserId,
+          UserName = task.User != null
+                ? task.User.Name
+                : null,
+          CreatedAt = task.CreatedAt,
+          UpdatedAt = task.UpdatedAt
+        })
+        .ToListAsync();
+
+    return Ok(tasks);
+  }
 }
