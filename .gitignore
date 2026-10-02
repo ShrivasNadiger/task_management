@@ -11,7 +11,9 @@
 
 # Environment / secrets
 .env
+backend/.env
 frontend/.env
+
 # Logs
 **/logs
 *.log
