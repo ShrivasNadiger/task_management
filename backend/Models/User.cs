@@ -8,6 +8,10 @@ public class User
 
   public string Email { get; set; } = string.Empty;
 
+  public string? PasswordHash { get; set; }
+
+  public string Role { get; set; } = "User";
+
   public DateTime CreatedAt { get; set; }
 
   public ICollection<TaskItem> Tasks { get; set; } = new List<TaskItem>();
