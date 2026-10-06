@@ -3,6 +3,7 @@ using backend.DTOs;
 using backend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers;
 
@@ -19,6 +20,7 @@ public class UsersController : ControllerBase
 
   // GET: /api/users
   [HttpGet]
+  [Authorize]
   public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetUsers()
   {
     var users = await _context.Users
@@ -36,6 +38,7 @@ public class UsersController : ControllerBase
 
   // GET: /api/users/1
   [HttpGet("{id}")]
+  [Authorize]
   public async Task<ActionResult<UserResponseDto>> GetUser(int id)
   {
     var user = await _context.Users
@@ -59,6 +62,7 @@ public class UsersController : ControllerBase
 
   // POST: /api/users
   [HttpPost]
+  [Authorize(Roles = "Admin")]
   public async Task<ActionResult<UserResponseDto>> CreateUser(
       CreateUserDto dto)
   {
@@ -90,6 +94,7 @@ public class UsersController : ControllerBase
 
   // PUT: /api/users/1
   [HttpPut("{id}")]
+  [Authorize(Roles = "Admin")]
   public async Task<IActionResult> UpdateUser(
       int id,
       UpdateUserDto dto)
@@ -111,6 +116,7 @@ public class UsersController : ControllerBase
 
   // DELETE: /api/users/1
   [HttpDelete("{id}")]
+  [Authorize(Roles = "Admin")]
   public async Task<IActionResult> DeleteUser(int id)
   {
     var user = await _context.Users.FindAsync(id);
@@ -128,6 +134,7 @@ public class UsersController : ControllerBase
   }
 
   [HttpGet("{id}/tasks")]
+  [Authorize]
   public async Task<ActionResult<IEnumerable<TaskResponseDto>>> GetUserTasks(int id)
   {
     var userExists = await _context.Users
