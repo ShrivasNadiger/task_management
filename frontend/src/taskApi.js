@@ -1,53 +1,24 @@
-// const API_URL = import.meta.env.VITE_API_URL;
-
-// export async function getUsers() {
-//   const response = await fetch(`${API_URL}/users`);
-
-//   if (!response.ok) {
-//     throw new Error("Failed to fetch users");
-//   }
-
-//   return response.json();
-// }
-
-// export async function getUserTasks(userId) {
-//   const response = await fetch(
-//     `${API_URL}/users/${userId}/tasks`
-//   );
-
-//   if (!response.ok) {
-//     throw new Error("Failed to fetch user tasks");
-//   }
-
-//   return response.json();
-// }
-
-// export async function createTask(task) {
-//   const response = await fetch(`${API_URL}/tasks`, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify(task),
-//   });
-
-//   if (!response.ok) {
-//     const message = await response.text();
-//     throw new Error(message || "Failed to create task");
-//   }
-
-//   return response.json();
-// }
-
+import { useAuth } from "./composables/useAuth";
 
 const API_URL = import.meta.env.VITE_API_URL;
+
+const { token } = useAuth();
+
+const reqHeaders = () => {
+  return {
+    "Content-Type": "application/json",
+    ...(token.value && { Authorization: `Bearer ${token.value}` })
+  }
+    };
 
 // ==============================
 // USERS
 // ==============================
 
 export async function getUsers() {
-  const response = await fetch(`${API_URL}/users`);
+  const response = await fetch(`${API_URL}/users`, {
+    headers: reqHeaders()
+  });
 
   if (!response.ok) {
     throw new Error("Failed to fetch users");
@@ -57,7 +28,9 @@ export async function getUsers() {
 }
 
 export async function getUser(userId) {
-  const response = await fetch(`${API_URL}/users/${userId}`);
+  const response = await fetch(`${API_URL}/users/${userId}`, {
+    headers:reqHeaders
+  });
 
   if (!response.ok) {
     throw new Error("Failed to fetch user");
@@ -69,9 +42,7 @@ export async function getUser(userId) {
 export async function createUser(user) {
   const response = await fetch(`${API_URL}/users`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: reqHeaders(),
     body: JSON.stringify(user),
   });
 
@@ -86,9 +57,7 @@ export async function createUser(user) {
 export async function updateUser(userId, user) {
   const response = await fetch(`${API_URL}/users/${userId}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: reqHeaders(),
     body: JSON.stringify(user),
   });
 
@@ -101,6 +70,7 @@ export async function updateUser(userId, user) {
 export async function deleteUser(userId) {
   const response = await fetch(`${API_URL}/users/${userId}`, {
     method: "DELETE",
+    headers:reqHeaders()
   });
 
   if (!response.ok) {
@@ -115,7 +85,9 @@ export async function deleteUser(userId) {
 
 export async function getUserTasks(userId) {
   const response = await fetch(
-    `${API_URL}/users/${userId}/tasks`
+    `${API_URL}/users/${userId}/tasks`, {
+      headers:reqHeaders()
+    }
   );
 
   if (!response.ok) {
@@ -127,7 +99,9 @@ export async function getUserTasks(userId) {
 
 export async function getTask(taskId) {
   const response = await fetch(
-    `${API_URL}/tasks/${taskId}`
+    `${API_URL}/tasks/${taskId}`,{
+      headers:reqHeaders()
+    }
   );
 
   if (!response.ok) {
@@ -140,9 +114,7 @@ export async function getTask(taskId) {
 export async function createTask(task) {
   const response = await fetch(`${API_URL}/tasks`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: reqHeaders(),
     body: JSON.stringify(task),
   });
 
@@ -157,9 +129,7 @@ export async function createTask(task) {
 export async function updateTask(taskId, task) {
   const response = await fetch(`${API_URL}/tasks/${taskId}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: reqHeaders(),
     body: JSON.stringify(task),
   });
 
@@ -172,6 +142,7 @@ export async function updateTask(taskId, task) {
 export async function deleteTask(taskId) {
   const response = await fetch(`${API_URL}/tasks/${taskId}`, {
     method: "DELETE",
+    headers: reqHeaders()
   });
 
   if (!response.ok) {
