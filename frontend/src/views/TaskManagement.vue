@@ -1,18 +1,23 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useAuth } from "../composables/useAuth.js";
 
-import UserSelector from "../components/tasks/UserSelector.vue";
+import StatusFilter from "../components/tasks/StatusFilter.vue";
 import TaskForm from "../components/tasks/TaskForm.vue";
 import TaskList from "../components/tasks/TaskList.vue";
-import StatusFilter from "../components/tasks/StatusFilter.vue";
+import UserSelector from "../components/tasks/UserSelector.vue";
 
 import {
+  createTask,
+  deleteTask,
   getUsers,
   getUserTasks,
-  createTask,
   updateTask,
-  deleteTask,
 } from "../taskApi";
+
+const { user } = useAuth();
+
+const isAdmin = computed(() => user.value?.role === "Admin");
 
 const users = ref([]);
 const tasks = ref([]);
@@ -171,7 +176,7 @@ onMounted(loadUsers);
 
       <!-- USER SELECTOR -->
 
-      <UserSelector
+      <UserSelector v-if="isAdmin"
         :users="users"
         :selected-user-id="selectedUserId"
         @select="loadUserTasks"

@@ -1,6 +1,7 @@
 using backend.Data;
 using backend.DTOs;
 using backend.Models;
+using backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
@@ -12,10 +13,12 @@ namespace backend.Controllers;
 public class UsersController : ControllerBase
 {
   private readonly AppDbContext _context;
+  private readonly CurrentUserService _currentUser;
 
-  public UsersController(AppDbContext context)
+  public UsersController(AppDbContext context, CurrentUserService currentUser)
   {
     _context = context;
+    _currentUser = currentUser;
   }
 
   // GET: /api/users
@@ -137,6 +140,16 @@ public class UsersController : ControllerBase
   [Authorize]
   public async Task<ActionResult<IEnumerable<TaskResponseDto>>> GetUserTasks(int id)
   {
+
+    var currentUserId = _currentUser.GetCurrentUserId();
+    if (currentUserId == null)
+    {
+      return Unauthorized();
+    }
+    if (!_currentUser.IsAdmin() && currentUserId.Value != id)
+    {
+      return NotFound();
+    }
     var userExists = await _context.Users
         .AnyAsync(user => user.Id == id);
 

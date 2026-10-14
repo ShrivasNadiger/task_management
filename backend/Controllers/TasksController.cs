@@ -1,9 +1,12 @@
 using backend.Data;
 using backend.DTOs;
 using backend.Models;
+using backend.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+
 
 namespace backend.Controllers;
 
@@ -13,18 +16,30 @@ namespace backend.Controllers;
 public class TasksController : ControllerBase
 {
   private readonly AppDbContext _context;
+  private readonly CurrentUserService _currentUser;
 
-  public TasksController(AppDbContext context)
+  public TasksController(AppDbContext context, CurrentUserService currentUser)
   {
     _context = context;
+    _currentUser = currentUser;
   }
 
   // GET: /api/tasks
   [HttpGet]
   public async Task<ActionResult<IEnumerable<TaskResponseDto>>> GetTasks()
   {
-    var tasks = await _context.Tasks
-        .Include(task => task.User)
+    var userId = _currentUser.GetCurrentUserId();
+
+    if (userId == null)
+      return Unauthorized();
+
+    var query = _context.Tasks.AsQueryable();
+
+    if (!_currentUser.IsAdmin())
+    {
+      query = query.Where(task => task.UserId == userId.Value);
+    }
+    var tasks = await query
         .Select(task => new TaskResponseDto
         {
           Id = task.Id,
@@ -80,13 +95,24 @@ public class TasksController : ControllerBase
   public async Task<ActionResult<TaskResponseDto>> CreateTask(
       CreateTaskDto dto)
   {
+    var currentUserId = _currentUser.GetCurrentUserId();
+
+    if (currentUserId == null)
+    {
+      return Unauthorized();
+    }
+
+    var targetedUserId = _currentUser.IsAdmin() ? dto.UserId : currentUserId.Value;
+
     var userExists = await _context.Users
-        .AnyAsync(user => user.Id == dto.UserId);
+        .AnyAsync(user => user.Id == targetedUserId);
 
     if (!userExists)
     {
       return BadRequest("User does not exist.");
     }
+
+    var now = DateTime.UtcNow;
 
     var task = new TaskItem
     {
@@ -94,9 +120,9 @@ public class TasksController : ControllerBase
       Description = dto.Description,
       Status = dto.Status,
       Priority = dto.Priority,
-      UserId = dto.UserId,
-      CreatedAt = DateTime.UtcNow,
-      UpdatedAt = DateTime.UtcNow
+      UserId = targetedUserId,
+      CreatedAt = now,
+      UpdatedAt = now
     };
 
     _context.Tasks.Add(task);
@@ -135,6 +161,14 @@ public class TasksController : ControllerBase
       int id,
       UpdateTaskDto dto)
   {
+
+    var currentUserId = _currentUser.GetCurrentUserId();
+
+    if (currentUserId == null)
+    {
+      return Unauthorized();
+    }
+
     var task = await _context.Tasks.FindAsync(id);
 
     if (task == null)
@@ -142,12 +176,17 @@ public class TasksController : ControllerBase
       return NotFound();
     }
 
-    var userExists = await _context.Users
-        .AnyAsync(user => user.Id == dto.UserId);
+    var targetUserId = _currentUser.IsAdmin() ? dto.UserId : task.UserId;
 
-    if (!userExists)
+    if (_currentUser.IsAdmin())
     {
-      return BadRequest("User does not exist.");
+      var userExists = await _context.Users
+          .AnyAsync(user => user.Id == dto.UserId);
+
+      if (!userExists)
+      {
+        return BadRequest("User does not exist.");
+      }
     }
 
     task.Title = dto.Title;
@@ -166,9 +205,22 @@ public class TasksController : ControllerBase
   [HttpDelete("{id}")]
   public async Task<IActionResult> DeleteTask(int id)
   {
+
+    var currentUserId = _currentUser.GetCurrentUserId();
+
+    if (currentUserId == null)
+    {
+      return Unauthorized();
+    }
+
     var task = await _context.Tasks.FindAsync(id);
 
     if (task == null)
+    {
+      return NotFound();
+    }
+
+    if (!_currentUser.IsAdmin() && task.UserId != currentUserId.Value)
     {
       return NotFound();
     }

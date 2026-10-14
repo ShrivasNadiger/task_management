@@ -14,6 +14,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<JwtService>();
 
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<CurrentUserService>();
+
 builder.Services.AddAuthentication(
     JwtBearerDefaults.AuthenticationScheme
 )
