@@ -75,7 +75,7 @@ public class AuthController : ControllerBase
     }
     if (string.IsNullOrEmpty(user.PasswordHash))
     {
-      return Unauthorized("Invalid Email or Password.");
+      return Unauthorized("Setup Password.");
     }
 
     var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
@@ -84,6 +84,13 @@ public class AuthController : ControllerBase
     {
       return Unauthorized("Invalid Password and User");
     }
+
+    if (result == PasswordVerificationResult.SuccessRehashNeeded)
+    {
+      user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
+      await _context.SaveChangesAsync();
+    }
+
     var token = _jwtService.GenerateToken(user);
 
     var response = new LoginResponseDto

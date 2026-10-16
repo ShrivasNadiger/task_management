@@ -73,6 +73,7 @@ public class UsersController : ControllerBase
     {
       Name = dto.Name,
       Email = dto.Email,
+      // Role = "User",
       CreatedAt = DateTime.UtcNow
     };
 
