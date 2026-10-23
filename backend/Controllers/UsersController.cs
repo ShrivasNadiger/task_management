@@ -69,11 +69,22 @@ public class UsersController : ControllerBase
   public async Task<ActionResult<UserResponseDto>> CreateUser(
       CreateUserDto dto)
   {
+
+    var emailExists = await _context.Users.AnyAsync(u => u.Email == dto.Email);
+
+    if (emailExists)
+    {
+      return Conflict(new
+      {
+        message = "A user with this email already exists."
+      });
+    }
     var user = new User
     {
       Name = dto.Name,
       Email = dto.Email,
-      // Role = "User",
+      Role = "User",
+      PasswordHash = null,
       CreatedAt = DateTime.UtcNow
     };
 
